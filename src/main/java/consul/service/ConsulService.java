@@ -48,6 +48,9 @@ import com.google.gson.Gson;
 import consul.model.DiscoveryResult;
 import consul.model.health.HealthCheck;
 import utils.Utility;
+import org.elasticsearch.common.logging.ESLogger;
+import org.elasticsearch.common.logging.Loggers;
+import org.elasticsearch.plugin.discovery.consul.ConsulDiscoveryPlugin;
 
 import java.io.IOException;
 import java.util.Arrays;
@@ -104,12 +107,15 @@ public final class ConsulService {
 			final String apiResponse = Utility.readUrl(consulServiceHealthEndPoint);
 			HealthCheck[] healthChecks = new Gson().fromJson(apiResponse, HealthCheck[].class);
 
+			ESLogger logger = Loggers.getLogger(ConsulDiscoveryPlugin.class);
+			logger.trace("discovering nodes:");	
 			Arrays.stream(healthChecks).forEach(healthCheck -> {
-                                String ip = healthCheck.getService().getAddress();
+                                String ip = healthCheck.getNode().getAddress();
                                 int port = healthCheck.getService().getPort();
                                 if (ip == null || ip.isEmpty()) {
                                     ip = healthCheck.getNode().getAddress();
                                 }
+								logger.trace(ip);	
                                 result.add(new DiscoveryResult(ip, port));
                             });
 		}
