@@ -72,6 +72,7 @@ public class ConsulUnicastHostsProvider extends AbstractComponent implements Uni
 	private final Set<String> consulServiceNames;
 	private final int consulAgentLocalWebServicePort;
 	private final String tag;
+	private final String consulHost;
 
 	@Inject
 	public ConsulUnicastHostsProvider(Settings settings, TransportService
@@ -88,6 +89,12 @@ public class ConsulUnicastHostsProvider extends AbstractComponent implements Uni
 		this.consulAgentLocalWebServicePort = settings.getAsInt("discovery.consul" +
 				".local-ws-port", 8500);
 		this.tag = settings.get("discovery.consul.tag");
+
+		if(settings.get("discovery.consul.host").equals("")){
+			this.consulHost = "localhost";
+		} else {
+			this.consulHost = settings.get("discovery.consul.host");
+		}
 	}
 
 	@Override
@@ -101,7 +108,7 @@ public class ConsulUnicastHostsProvider extends AbstractComponent implements Uni
 			logger.trace("starting discovery request");
 			final long startTime = System.currentTimeMillis();
 			consulDiscoveryResults = new ConsulService(this
-					.consulAgentLocalWebServicePort, this.tag)
+					.consulAgentLocalWebServicePort, this.consulHost, this.tag)
 					.discoverHealthyNodes(this.consulServiceNames);
 			if (logger.isTraceEnabled()) {
 				logger.trace("discovered {} nodes", (consulDiscoveryResults != null ?
