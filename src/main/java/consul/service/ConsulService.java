@@ -53,6 +53,8 @@ import org.elasticsearch.common.logging.Loggers;
 import org.elasticsearch.plugin.discovery.consul.ConsulDiscoveryPlugin;
 
 import java.io.IOException;
+import java.security.AccessController;
+import java.security.PrivilegedAction;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
@@ -105,7 +107,14 @@ public final class ConsulService {
 		for (String serviceName : serviceNames) {
 			String consulServiceHealthEndPoint = getConsulHealthCheckApiUrl(serviceName);
 			final String apiResponse = Utility.readUrl(consulServiceHealthEndPoint);
-			HealthCheck[] healthChecks = new Gson().fromJson(apiResponse, HealthCheck[].class);
+			HealthCheck[] healthChecks = (HealthCheck[])AccessController.doPrivileged(
+				new PrivilegedAction<HealthCheck[]>() {
+					@Override
+					public HealthCheck[] run() {
+						return new Gson().fromJson(apiResponse, HealthCheck[].class);
+					}
+				}
+			);
 
 			ESLogger logger = Loggers.getLogger(ConsulDiscoveryPlugin.class);
 			logger.trace("discovering nodes:");	
